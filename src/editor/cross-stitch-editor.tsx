@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Layer, Stage, Line, Rect } from "react-konva";
 import './cross-stitch-editor.scss';
 import { KonvaEventObject } from "konva/types/Node";
@@ -15,6 +15,7 @@ export const CrossStitchEditor: React.FunctionComponent<CrossStitchEditorProps> 
   const verticals : React.ReactNode[] = [];
   const height = image.length;
   const width = (image[0] && image[0].length) || 0;
+  const [isClicked, setIsClicked] = useState(false);
 
   for(let i=0; i <= width; i++) {
     const points = [ i * ratio, 0, i * ratio, height * ratio ];
@@ -27,7 +28,7 @@ export const CrossStitchEditor: React.FunctionComponent<CrossStitchEditorProps> 
   }
   const horizontals : React.ReactNode[] = [];
 
-  const clickHandler = (e: KonvaEventObject<MouseEvent>) => {
+  const doDrag  = (e: KonvaEventObject<MouseEvent>) => {    
     const stage = e.target.getStage();
     const pointerPosition = stage!.getPointerPosition();
     if(!pointerPosition)
@@ -35,6 +36,21 @@ export const CrossStitchEditor: React.FunctionComponent<CrossStitchEditorProps> 
     onSelect(Math.floor(pointerPosition.x / ratio), Math.floor(pointerPosition.y / ratio));
   }
 
+  const onDrag = (e: KonvaEventObject<MouseEvent>) => {
+    if(!isClicked) {
+      return;
+    }
+    doDrag(e);
+  }
+
+  const onStartDrag = (e: KonvaEventObject<MouseEvent>) => {
+    setIsClicked(true);
+    doDrag(e);
+  }
+
+  const onEndDrag = () => {
+    setIsClicked(false);
+  }
   for(let i=0; i <= height; i++) {
     const points = [ 0, i * ratio , width * ratio, i * ratio ];
     horizontals.push(
@@ -44,7 +60,7 @@ export const CrossStitchEditor: React.FunctionComponent<CrossStitchEditorProps> 
             stroke={lineFill}>
       </Line>);
   }
-  return <Stage width={width * ratio} height={height * ratio} className="editor" onClick={clickHandler}>
+  return <Stage width={width * ratio} height={height * ratio} className="editor" onMouseDown={onStartDrag} onMouseMove={onDrag} onMouseUp={onEndDrag} onMouseLeave={onEndDrag}>
       <Layer>
         { image.map((row, i) => 
           row.map((column, j) => 
